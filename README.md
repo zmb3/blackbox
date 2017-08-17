@@ -4,7 +4,11 @@ A tool for moving secrets from Concourse params files into Vault.
 
 ## Installation
 
-`$ go get -u github.com/zmb3/blackbox`
+Download a [release](https://github.com/zmb3/blackbox/releases) for your platform, or:
+
+```
+$ go get -u github.com/zmb3/blackbox
+```
 
 ## Usage
 
