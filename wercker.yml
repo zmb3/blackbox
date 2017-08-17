@@ -19,7 +19,7 @@ build:
     - script:
         name: copy artifacts
         code: |
-          cp -R ./ ${WERCKER_OUTPUT_DIR}
+          cp -R ./blackbox* ${WERCKER_OUTPUT_DIR}
 
 deploy:
   steps:
@@ -31,7 +31,7 @@ deploy:
 
     - github-create-release:
         token: $GITHUB_TOKEN
-        tag: $WERCKER_GITHUB_CREATE_RELEASE_ID
+        tag_name: $WERCKER_GITHUB_CREATE_RELEASE_ID
         title: blackbox $WERCKER_GITHUB_CREATE_RELEASE_ID
         draft: true
 
