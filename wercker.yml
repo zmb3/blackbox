@@ -2,12 +2,13 @@ box: golang
 
 build:
   steps:
+    - wercker/setup-go-workspace
     - script:
         name: go test
         code: |
           go version
-          pwd
-          ls vendor
+          go env
+          echo "PWD: $(pwd)"
           go test -v -race
     - script:
         name: go build
