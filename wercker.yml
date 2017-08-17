@@ -1,0 +1,50 @@
+box: golang
+
+build:
+  steps:
+    - script:
+        name: go test
+        code: |
+          go test -v -race
+    - script:
+        name: go build
+        code: |
+          GOOS=linux go build -o blackbox-linux
+          GOOS=darwin go build -o blackbox-darwin
+          GOOS=windows go build -o blackbox.exe
+    - script:
+        name: copy artifacts
+        code: |
+          cp -R ./ ${WERCKER_OUTPUT_DIR}
+
+deploy:
+  steps:
+    - script:
+        name: set release id variable for version
+        code: |
+          go get github.com/xchapter7x/versioning
+          export WERCKER_GITHUB_CREATE_RELEASE_ID=`versioning bump_patch`
+
+    - github-create-release:
+        token: $GITHUB_TOKEN
+        tag: $WERCKER_GITHUB_CREATE_RELEASE_ID
+        title: blackbox $WERCKER_GITHUB_CREATE_RELEASE_ID
+        draft: true
+
+    - github-upload-asset:
+        token: $GITHUB_TOKEN
+        file: blackbox-darwin
+        release_id: $WERCKER_GITHUB_CREATE_RELEASE_ID
+        content-type: application/x-gzip
+
+    - github-upload-asset:
+        token: $GITHUB_TOKEN
+        file: blackbox-linux
+        release_id: $WERCKER_GITHUB_CREATE_RELEASE_ID
+        content-type: application/x-gzip
+
+    - github-upload-asset:
+        token: $GITHUB_TOKEN
+        file: blackbox.exe
+        release_id: $WERCKER_GITHUB_CREATE_RELEASE_ID
+        content-type: application/x-gzip
