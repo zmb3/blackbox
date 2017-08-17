@@ -5,6 +5,9 @@ build:
     - script:
         name: go test
         code: |
+          go version
+          pwd
+          ls vendor
           go test -v -race
     - script:
         name: go build
