@@ -17,6 +17,13 @@ build:
           GOOS=darwin go build -o blackbox-darwin
           GOOS=windows go build -o blackbox.exe
     - script:
+        name: write version to file
+        code: |
+          echo "Tags: $(git tag -l)"
+          go get github.com/xchapter7x/versioning
+          export WERCKER_GITHUB_CREATE_RELEASE_ID=`versioning bump_patch`
+          echo $WERCKER_GITHUB_CREATE_RELEASE_ID > blackbox-version
+    - script:
         name: copy artifacts
         code: |
           cp -R ./blackbox* ${WERCKER_OUTPUT_DIR}
@@ -26,13 +33,13 @@ deploy:
     - script:
         name: set release id variable for version
         code: |
-          go get github.com/xchapter7x/versioning
-          export WERCKER_GITHUB_CREATE_RELEASE_ID=`versioning bump_patch`
+          export RELEASE_VERSION=`cat blackbox-version`
+          echo $RELEASE_VERSION
 
     - github-create-release:
         token: $GITHUB_TOKEN
-        tag_name: $WERCKER_GITHUB_CREATE_RELEASE_ID
-        title: blackbox $WERCKER_GITHUB_CREATE_RELEASE_ID
+        tag: $RELEASE_VERSION
+        title: blackbox $RELEASE_VERSION
         draft: true
 
     - github-upload-asset:
