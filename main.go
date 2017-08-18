@@ -13,6 +13,11 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+func fatalf(format string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, format, args...)
+	os.Exit(2)
+}
+
 func main() {
 	input := flag.String("in", "", "the input params file")
 	output := flag.String("out", "", "the sanitized output params file")
@@ -26,44 +31,39 @@ func main() {
 
 	inBytes, err := ioutil.ReadFile(*input)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "couldn't read params file: %v\n", err)
-		os.Exit(2)
+		fatalf("could not read params file: %v\n", err)
 	}
-
-	s := sanitizer{vaultPath: *path}
 
 	client, err := vault.NewClient(vault.DefaultConfig())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "cannot connect to Vault: %v\n", err)
-		os.Exit(2)
+		fatalf("could not connect to Vault: %v\n", err)
 	}
-	s.vault = &vaultStorer{client: client}
+	s := sanitizer{
+		vaultPath: *path,
+		vault:     &vaultStorer{client: client},
+		shouldMove: func(item yaml.MapItem) bool {
+			fmt.Printf("move %s? (n): ", item.Key)
+			var choice string
+			fmt.Scanf("%s\n", &choice)
+			return strings.HasPrefix(strings.ToLower(choice), "y")
+		},
+	}
 
 	// read input yml
 	err = s.Load(inBytes)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "couldn't parse input yml: %v\n", err)
-		os.Exit(2)
+		fatalf("could not parse input yml: %v\n", err)
 	}
 
 	// process params
-	s.shouldMove = func(item yaml.MapItem) bool {
-		fmt.Printf("move %s? (n): ", item.Key)
-		var choice string
-		fmt.Scanf("%s\n", &choice)
-		return strings.HasPrefix(strings.ToLower(choice), "y")
-	}
-
 	err = s.Run()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
+		fatalf("%v\n", err)
 	}
 
 	// write output yml
 	err = s.Write(*output)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "could not write output yml: %v\n", err)
-		os.Exit(2)
+		fatalf("could not write output yml: %v\n", err)
 	}
 }

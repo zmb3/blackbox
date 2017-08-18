@@ -45,6 +45,7 @@ move username? (n):
 $ cat params2.yml
 param1: param1
 username: admin
+
 $ vault list secret/pipeline
 Keys
 ----

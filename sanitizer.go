@@ -23,31 +23,34 @@ type sanitizer struct {
 
 // Load initializes the sanitizer with the specified yaml data.
 func (s *sanitizer) Load(yml []byte) error {
+	s.out = nil
 	return yaml.Unmarshal(yml, &s.orig)
 }
 
-// Run processes each input param.
+// Run iterates through each input param, either storing the data
+// in Vault, or recording it as non-sensitive.
 func (s *sanitizer) Run() error {
 	for _, item := range s.orig {
-		if s.shouldMove(item) {
-			k := fmt.Sprintf("%v", item.Key)
-
-			// write to "value" property unless param uses ((property.varname)) syntax
-			key := "value"
-			if i := strings.Index(k, "."); i != -1 {
-				key = k[:i]
-				k = k[i+1:]
-			}
-
-			p := path.Join(s.vaultPath, k)
-			err := s.vault.Store(p, map[string]interface{}{
-				key: item.Value,
-			})
-			if err != nil {
-				return fmt.Errorf("could not write to Vault at %s: %v", p, err)
-			}
-		} else {
+		if !s.shouldMove(item) {
 			s.out = append(s.out, item)
+			continue
+		}
+
+		k := fmt.Sprintf("%v", item.Key)
+
+		// write to "value" property unless param uses ((property.varname)) syntax
+		vaultKey := "value"
+		if i := strings.Index(k, "."); i != -1 {
+			vaultKey = k[:i]
+			k = k[i+1:]
+		}
+
+		p := path.Join(s.vaultPath, k)
+		err := s.vault.Store(p, map[string]interface{}{
+			vaultKey: item.Value,
+		})
+		if err != nil {
+			return fmt.Errorf("could not write to Vault at %s: %v", p, err)
 		}
 	}
 	return nil
