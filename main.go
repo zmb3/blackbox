@@ -21,7 +21,8 @@ func fatalf(format string, args ...interface{}) {
 func main() {
 	input := flag.String("in", "", "the input params file")
 	output := flag.String("out", "", "the sanitized output params file")
-	path := flag.String("path", "", "the base vault path to write to (eg: concourse/myteam/mypipeline)")
+	path := flag.String("path", "", "the base Vault path to write to (eg: concourse/myteam/mypipeline)")
+	all := flag.Bool("all", false, "move all params to Vault (don't prompt for each)")
 	flag.Parse()
 
 	if *input == "" || *output == "" || *path == "" {
@@ -42,6 +43,9 @@ func main() {
 		vaultPath: *path,
 		vault:     &vaultStorer{client: client},
 		shouldMove: func(item yaml.MapItem) bool {
+			if *all {
+				return true
+			}
 			fmt.Printf("move %s? (n): ", item.Key)
 			var choice string
 			fmt.Scanf("%s\n", &choice)
