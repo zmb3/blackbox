@@ -33,13 +33,14 @@ deploy:
     - script:
         name: set release id variable for version
         code: |
+          export SHORT_HASH=`git rev-parse --short $WERCKER_GIT_COMMIT`
           export RELEASE_VERSION=`cat blackbox-version`
           echo $RELEASE_VERSION
 
     - github-create-release:
         token: $GITHUB_TOKEN
         tag: $RELEASE_VERSION
-        title: blackbox $RELEASE_VERSION
+        title: blackbox $RELEASE_VERSION - $SHORT_HASH
         draft: true
 
     - github-upload-asset:
