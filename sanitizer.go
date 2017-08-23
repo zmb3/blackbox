@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"path"
 	"strings"
@@ -19,6 +20,7 @@ type sanitizer struct {
 	vault      storer
 	vaultPath  string
 	shouldMove func(item yaml.MapItem) bool
+	verbose    io.Writer
 }
 
 // Load initializes the sanitizer with the specified yaml data.
@@ -51,6 +53,9 @@ func (s *sanitizer) Run() error {
 		})
 		if err != nil {
 			return fmt.Errorf("could not write to Vault at %s: %v", p, err)
+		}
+		if s.verbose != nil {
+			fmt.Fprintf(s.verbose, "wrote %s\n", p)
 		}
 	}
 	return nil

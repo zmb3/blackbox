@@ -23,9 +23,10 @@ func main() {
 	output := flag.String("out", "", "the sanitized output params file")
 	path := flag.String("path", "", "the base Vault path to write to (eg: concourse/myteam/mypipeline)")
 	all := flag.Bool("all", false, "move all params to Vault (don't prompt for each)")
+	verbose := flag.Bool("verbose", false, "display verbose output")
 	flag.Parse()
 
-	if *input == "" || *output == "" || *path == "" {
+	if *input == "" || *path == "" || (!*all && *output == "") {
 		flag.Usage()
 		os.Exit(2)
 	}
@@ -53,6 +54,10 @@ func main() {
 		},
 	}
 
+	if *verbose {
+		s.verbose = os.Stdout
+	}
+
 	// read input yml
 	err = s.Load(inBytes)
 	if err != nil {
@@ -66,8 +71,10 @@ func main() {
 	}
 
 	// write output yml
-	err = s.Write(*output)
-	if err != nil {
-		fatalf("could not write output yml: %v\n", err)
+	if *output != "" {
+		err = s.Write(*output)
+		if err != nil {
+			fatalf("could not write output yml: %v\n", err)
+		}
 	}
 }
