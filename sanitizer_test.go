@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"testing"
@@ -37,6 +38,36 @@ func TestLoadError(t *testing.T) {
 	err := s.Load([]byte(`this is not valid yml`))
 	if err == nil {
 		t.Error("expected error but didn't get one")
+	}
+}
+
+func TestRunVerboseOutput(t *testing.T) {
+	var s sanitizer
+	err := s.Load([]byte(`foo: bar`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	buf := &bytes.Buffer{}
+	s.verbose = buf
+	s.vaultPath = "concourse/myteam/mypipeline"
+
+	// no-op storer
+	s.vault = storerFunc(func(path string, data map[string]interface{}) error {
+		return nil
+	})
+
+	s.shouldMove = func(item yaml.MapItem) bool {
+		return true
+	}
+
+	err = s.Run()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if msg := buf.String(); msg != "wrote concourse/myteam/mypipeline/foo\n" {
+		t.Errorf("wrong verbose output: %q", msg)
 	}
 }
 
