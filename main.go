@@ -13,12 +13,21 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+func ensureEnv(varname string) {
+	if ev := os.Getenv(varname); ev == "" {
+		fatalf("required environment variable %q is missing", varname)
+	}
+}
+
 func fatalf(format string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, format, args...)
 	os.Exit(2)
 }
 
 func main() {
+	ensureEnv("VAULT_TOKEN")
+	ensureEnv("VAULT_ADDR")
+
 	input := flag.String("in", "", "the input params file")
 	output := flag.String("out", "", "the sanitized output params file")
 	path := flag.String("path", "", "the base Vault path to write to (eg: concourse/myteam/mypipeline)")
