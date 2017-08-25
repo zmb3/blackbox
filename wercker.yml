@@ -8,7 +8,6 @@ build:
         code: |
           go version
           go env
-          echo "PWD: $(pwd)"
           go test -v -race
     - script:
         name: go build
@@ -19,10 +18,11 @@ build:
     - script:
         name: write version to file
         code: |
-          echo "Tags: $(git tag -l)"
           go get github.com/xchapter7x/versioning
           export WERCKER_GITHUB_CREATE_RELEASE_ID=`versioning bump_patch`
+          export SHORT_HASH=`git rev-parse --short $WERCKER_GIT_COMMIT`
           echo $WERCKER_GITHUB_CREATE_RELEASE_ID > blackbox-version
+          echo $SHORT_HASH > blackbox-commit
     - script:
         name: copy artifacts
         code: |
@@ -33,14 +33,13 @@ deploy:
     - script:
         name: set release id variable for version
         code: |
-          export SHORT_HASH=`git rev-parse --short $WERCKER_GIT_COMMIT`
           export RELEASE_VERSION=`cat blackbox-version`
-          echo $RELEASE_VERSION
+          export COMMIT_HASH=`cat blackbox-commit`
 
     - github-create-release:
         token: $GITHUB_TOKEN
         tag: $RELEASE_VERSION
-        title: blackbox $RELEASE_VERSION - $SHORT_HASH
+        title: blackbox $RELEASE_VERSION - $COMMIT_HASH
         draft: true
 
     - github-upload-asset:
