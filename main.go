@@ -45,7 +45,7 @@ func main() {
 		fatalf("could not read params file: %v\n", err)
 	}
 
-	client, err := vault.NewClient(vault.DefaultConfig())
+	client, err := vault.NewClient(nil)
 	if err != nil {
 		fatalf("could not connect to Vault: %v\n", err)
 	}
